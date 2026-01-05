@@ -1,0 +1,190 @@
+:root {
+    --bg-color: #f9f9f9;
+    --card-bg: #ffffff;
+    --text-color: #2c3e50;
+    --accent-color: #6c5ce7;
+    --border-color: #dfe6e9;
+    --stamp-color: rgba(231, 76, 60, 0.85); /* Reddish stamp */
+    --free-space-bg: #ffeaa7; /* Subtle highlight */
+
+    --font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+}
+
+header h1 {
+    font-weight: 800;
+    font-size: 2.5rem;
+    margin-bottom: 0.2rem;
+    letter-spacing: -1px;
+    color: var(--accent-color);
+}
+
+header p {
+    margin-top: 0;
+    color: #636e72;
+    margin-bottom: 2rem;
+}
+
+/* Container for capture */
+#bingo-container {
+    padding: 20px;
+    background-color: var(--bg-color); /* Ensure background is captured */
+    border-radius: 10px;
+    display: inline-block; /* Fits content */
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 2rem;
+    aspect-ratio: 1 / 1; /* Keep it square */
+}
+
+.bingo-cell {
+    background-color: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.75rem; /* Small text to fit */
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    overflow: hidden; /* Keep stamp inside */
+}
+
+.bingo-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border-color: var(--accent-color);
+}
+
+.bingo-cell.free-space {
+    background-color: var(--free-space-bg);
+    border-color: #fdcb6e;
+    font-weight: 800;
+}
+
+.content {
+    z-index: 1; /* Text above background, below stamp? Actually stamp needs to be on top */
+}
+
+/* Stamp Effect */
+.stamp-mark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    border: 3px solid var(--stamp-color);
+    background-color: rgba(231, 76, 60, 0.2); /* Lighter interior */
+    opacity: 0;
+    pointer-events: none; /* Let clicks pass through */
+    transition: opacity 0.2s ease-in;
+    z-index: 2;
+    box-shadow: 0 0 0 2px rgba(231,76,60,0.1) inset; /* Rough edge effect simulation */
+}
+
+/* Use a pseudo element to make the stamp look 'grungy' or 'inked' */
+.stamp-mark::after {
+    content: "BINGO";
+    font-size: 0.6rem; /* Tiny text */
+    color: var(--stamp-color);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 800;
+    opacity: 0.6;
+    display: none; /* Optional: maybe just a circle is better? */
+}
+
+/* When stamped */
+.bingo-cell.stamped .stamp-mark {
+    opacity: 1;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-family);
+    transition: background-color 0.2s;
+}
+
+.btn.primary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.btn.primary:hover {
+    background-color: #5649c0;
+}
+
+.btn.secondary {
+    background-color: #dfe6e9;
+    color: #2d3436;
+}
+
+.btn.secondary:hover {
+    background-color: #b2bec3;
+}
+
+footer {
+    font-size: 0.8rem;
+    color: #b2bec3;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 500px) {
+    .container {
+        width: 100%;
+        padding: 5px;
+    }
+
+    .grid {
+        gap: 5px;
+    }
+
+    .bingo-cell {
+        font-size: 0.55rem;
+        padding: 2px;
+    }
+
+    #bingo-container {
+        padding: 5px;
+    }
+}
