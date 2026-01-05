@@ -48,7 +48,7 @@ const CATEGORIES = {
 };
 
 const FREE_SPACE_TEXT = "Trump abducts Maduro";
-let winTimeout = null;
+let lastWinningLines = new Set(); // Stores IDs of winning lines (e.g. "row-0", "col-2")
 
 // Utility: Fisher-Yates Shuffle
 function shuffle(array) {
@@ -102,7 +102,10 @@ function generateGridData() {
 
 function renderGrid() {
     const grid = document.getElementById('bingo-grid');
+    if (!grid) return; // Guard for testing environments without full DOM setup if called early
+
     grid.innerHTML = ''; // Clear existing
+    lastWinningLines = new Set(); // Reset winning lines history
 
     const items = generateGridData();
 
@@ -120,13 +123,16 @@ function renderGrid() {
         if (index === 12 && text === FREE_SPACE_TEXT) {
             cell.classList.add('free-space');
             cell.classList.add('stamped'); // Pre-stamped
-            // Add custom free space marker logic if needed, but 'stamped' class handles visual
         } else {
             // Add click listener for normal cells
             cell.addEventListener('click', () => {
                 toggleStamp(cell);
             });
         }
+
+        // Stamp Container (clips the stamp)
+        const stampContainer = document.createElement('div');
+        stampContainer.classList.add('stamp-container');
 
         // Add stamp element (hidden by default unless .stamped)
         const stamp = document.createElement('div');
@@ -135,7 +141,16 @@ function renderGrid() {
         const rotation = Math.floor(Math.random() * 60) - 30; // -30 to 30 deg
         const scale = 0.9 + Math.random() * 0.2; // slight size variation
         stamp.style.transform = `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`;
-        cell.appendChild(stamp);
+
+        stampContainer.appendChild(stamp);
+        cell.appendChild(stampContainer);
+
+        // Strike Lines
+        ['row', 'col', 'diag-main', 'diag-anti'].forEach(type => {
+            const line = document.createElement('div');
+            line.className = `strike-line ${type}`;
+            cell.appendChild(line);
+        });
 
         grid.appendChild(cell);
     });
@@ -150,109 +165,109 @@ function toggleStamp(cell) {
 
 function checkWin() {
     const cells = document.querySelectorAll('.bingo-cell');
+    if (cells.length === 0) return;
+
     const size = 5;
-    let winType = null; // 'row', 'col', 'diag-main', 'diag-anti'
-    let winningLine = null;
+
+    let currentWinningLines = new Set();
 
     // Check Rows
     for (let r = 0; r < size; r++) {
-        let rowIndices = [];
         let allStamped = true;
         for (let c = 0; c < size; c++) {
-            let index = r * size + c;
-            rowIndices.push(index);
-            if (!cells[index].classList.contains('stamped')) {
+            if (!cells[r * size + c].classList.contains('stamped')) {
                 allStamped = false;
                 break;
             }
         }
         if (allStamped) {
-            winningLine = rowIndices;
-            winType = 'row';
-            break;
+            currentWinningLines.add(`row-${r}`);
         }
     }
 
     // Check Columns
-    if (!winningLine) {
-        for (let c = 0; c < size; c++) {
-            let colIndices = [];
-            let allStamped = true;
-            for (let r = 0; r < size; r++) {
-                let index = r * size + c;
-                colIndices.push(index);
-                if (!cells[index].classList.contains('stamped')) {
-                    allStamped = false;
-                    break;
-                }
-            }
-            if (allStamped) {
-                winningLine = colIndices;
-                winType = 'col';
+    for (let c = 0; c < size; c++) {
+        let allStamped = true;
+        for (let r = 0; r < size; r++) {
+            if (!cells[r * size + c].classList.contains('stamped')) {
+                allStamped = false;
                 break;
             }
+        }
+        if (allStamped) {
+            currentWinningLines.add(`col-${c}`);
         }
     }
 
     // Check Diagonals
-    if (!winningLine) {
-        // Top-left to bottom-right
-        let diag1 = [0, 6, 12, 18, 24];
-        if (diag1.every(i => cells[i].classList.contains('stamped'))) {
-            winningLine = diag1;
-            winType = 'diag-main';
+    let diag1 = [0, 6, 12, 18, 24];
+    if (diag1.every(i => cells[i].classList.contains('stamped'))) {
+        currentWinningLines.add('diag-main');
+    }
+
+    let diag2 = [4, 8, 12, 16, 20];
+    if (diag2.every(i => cells[i].classList.contains('stamped'))) {
+        currentWinningLines.add('diag-anti');
+    }
+
+    // Determine if we have any NEW wins
+    let hasNewWin = false;
+    for (let lineId of currentWinningLines) {
+        if (!lastWinningLines.has(lineId)) {
+            hasNewWin = true;
+            break;
         }
     }
-    if (!winningLine) {
-        // Top-right to bottom-left
-        let diag2 = [4, 8, 12, 16, 20];
-        if (diag2.every(i => cells[i].classList.contains('stamped'))) {
-            winningLine = diag2;
-            winType = 'diag-anti';
+
+    // Trigger Confetti if new win
+    if (hasNewWin) {
+        if (window.confetti) {
+            window.confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
         }
     }
 
-    if (winningLine) {
-        triggerWin(winningLine, winType);
-    } else {
-        removeStrikes();
-    }
+    // Update persistent state
+    lastWinningLines = currentWinningLines;
+
+    // Update Visuals
+    updateStrikeLines(cells, currentWinningLines);
 }
 
-function triggerWin(indices, winType) {
-    // Confetti immediately
-    if (window.confetti) {
-        window.confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-    }
+function updateStrikeLines(cells, winningLines) {
+    // First, deactivate all lines
+    document.querySelectorAll('.strike-line').forEach(el => el.classList.remove('active'));
 
-    // Clear any pending timeout
-    if (winTimeout) clearTimeout(winTimeout);
-
-    // Delay strike through
-    winTimeout = setTimeout(() => {
-        const cells = document.querySelectorAll('.bingo-cell');
-
-        // Remove old strikes to be clean
-        cells.forEach(cell => {
-             cell.classList.remove('won', 'won-row', 'won-col', 'won-diag-main', 'won-diag-anti');
-        });
-
-        indices.forEach(index => {
-            cells[index].classList.add('won');
-            cells[index].classList.add(`won-${winType}`);
-        });
-    }, 500);
-}
-
-function removeStrikes() {
-    if (winTimeout) clearTimeout(winTimeout);
-    const cells = document.querySelectorAll('.bingo-cell');
-    cells.forEach(cell => {
-        cell.classList.remove('won', 'won-row', 'won-col', 'won-diag-main', 'won-diag-anti');
+    // Then activate current wins
+    winningLines.forEach(lineId => {
+        if (lineId.startsWith('row-')) {
+            const r = parseInt(lineId.split('-')[1]);
+            for (let c = 0; c < 5; c++) {
+                const index = r * 5 + c;
+                const line = cells[index].querySelector('.strike-line.row');
+                if (line) line.classList.add('active');
+            }
+        } else if (lineId.startsWith('col-')) {
+            const c = parseInt(lineId.split('-')[1]);
+            for (let r = 0; r < 5; r++) {
+                const index = r * 5 + c;
+                const line = cells[index].querySelector('.strike-line.col');
+                if (line) line.classList.add('active');
+            }
+        } else if (lineId === 'diag-main') {
+            [0, 6, 12, 18, 24].forEach(index => {
+                const line = cells[index].querySelector('.strike-line.diag-main');
+                if (line) line.classList.add('active');
+            });
+        } else if (lineId === 'diag-anti') {
+            [4, 8, 12, 16, 20].forEach(index => {
+                const line = cells[index].querySelector('.strike-line.diag-anti');
+                if (line) line.classList.add('active');
+            });
+        }
     });
 }
 
@@ -274,11 +289,17 @@ if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
         renderGrid();
 
-        document.getElementById('refresh-btn').addEventListener('click', () => {
-            renderGrid();
-            removeStrikes();
-        });
-        document.getElementById('download-btn').addEventListener('click', downloadGrid);
+        const refreshBtn = document.getElementById('refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                renderGrid();
+            });
+        }
+
+        const downloadBtn = document.getElementById('download-btn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', downloadGrid);
+        }
     });
 }
 
@@ -288,6 +309,7 @@ if (typeof module !== 'undefined' && module.exports) {
         generateGridData,
         checkWin,
         downloadGrid,
+        renderGrid,
         CATEGORIES,
         FREE_SPACE_TEXT
     };
