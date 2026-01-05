@@ -270,12 +270,24 @@ function downloadGrid() {
 }
 
 // Initial Render
-document.addEventListener('DOMContentLoaded', () => {
-    renderGrid();
-
-    document.getElementById('refresh-btn').addEventListener('click', () => {
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
         renderGrid();
-        removeStrikes();
+
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            renderGrid();
+            removeStrikes();
+        });
+        document.getElementById('download-btn').addEventListener('click', downloadGrid);
     });
-    document.getElementById('download-btn').addEventListener('click', downloadGrid);
-});
+}
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        generateGridData,
+        checkWin,
+        CATEGORIES,
+        FREE_SPACE_TEXT
+    };
+}

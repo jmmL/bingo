@@ -1,0 +1,13 @@
+{
+  "name": "bingo-2026",
+  "version": "1.0.0",
+  "description": "2026 Predictions Bingo",
+  "main": "script.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "jest-environment-jsdom": "^29.0.0"
+  }
+}
