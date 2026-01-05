@@ -287,6 +287,7 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         generateGridData,
         checkWin,
+        downloadGrid,
         CATEGORIES,
         FREE_SPACE_TEXT
     };
