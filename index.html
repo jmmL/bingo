@@ -9,18 +9,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
     <script src="script.js" defer></script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>2026 BINGO</h1>
-            <p>A randomly generated grid for the year ahead.</p>
-        </header>
 
-        <div id="bingo-container">
-            <div id="bingo-grid" class="grid">
-                <!-- Grid items will be generated here -->
+        <div id="capture-area">
+            <header>
+                <h1>2026 Bingo</h1>
+                <p>A randomly generated grid for the year ahead.</p>
+            </header>
+
+            <div id="bingo-container">
+                <div id="bingo-grid" class="grid">
+                    <!-- Grid items will be generated here -->
+                </div>
             </div>
         </div>
 
