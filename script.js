@@ -1,53 +1,54 @@
 // Data Definitions
 const CATEGORIES = {
     politics: [
-        "UK PM and Chancellor both remain in post",
-        "Ukraine war remains active without a formal ceasefire",
-        "China military exercise enters Taiwan’s territorial waters/airspace",
-        "US sends Greenland ultimatum to Denmark",
-        "US caught spying on EU leadership",
-        "Green Party wins more local council seats than Reform UK",
-        "UK/EU formally begin Customs Union negotiations",
-        "Kemi Badenoch replaced as Conservative Leader",
-        "Major new African–EU Trade Deal signed"
+        "UK PM and Chancellor remain",
+        "Ukraine war continues",
+        "China military enters Taiwan",
+        "US sends Greenland ultimatum",
+        "US caught spying on EU",
+        "Greens win more seats than Reform",
+        "UK/EU Customs Union talks",
+        "Badenoch replaced as Tory Leader",
+        "Major African–EU Trade Deal"
     ],
     technology: [
-        "Waymo launches public commercial service in London",
-        "Major AI company confirms a data breach of >1M users",
-        "AI-native video social app reaches Global Top 10 (App Store)",
-        "Grok AI-generated adult content reaches >5% of porn traffic",
-        "AI \"Agents\" used for autonomous multi-step tasks by a team member at work",
-        "Frontier AI model achieves >95% on ARC-AGI-2 benchmark",
-        "First feature-length AI-generated film enters box office top 10"
+        "Waymo launches in London",
+        "Major AI data breach >1M users",
+        "AI video app hits Top 10",
+        "Grok adult content hits >5%",
+        "AI Agents used at work",
+        "AI model >95% on ARC-AGI-2",
+        "AI film in box office top 10"
     ],
     economics: [
-        "Bitcoin price touches or falls below $25,000 USD",
-        "Bank of England base rate drops to 3.0% or lower",
-        "Global stock market index (e.g., S&P 500) drops >10% in one month",
-        "Alphabet (GOOGL) stock reaches $500",
-        "SpaceX holds a public IPO",
-        "Brent Crude Oil price drops below $50/barrel",
-        "Euro (EUR) reaches 1:1 parity with the Pound (GBP)"
+        "Bitcoin falls below $25k",
+        "BoE base rate drops to 3.0%",
+        "Global stocks drop >10% in month",
+        "Alphabet stock reaches $500",
+        "SpaceX IPO",
+        "Oil drops below $50/barrel",
+        "EUR/GBP parity"
     ],
     science: [
-        "Artemis II successfully completes crewed lunar flyby",
-        "Zahi Hawass reveals new 30m corridor/chamber inside Great Pyramid",
-        "Renewables surpass coal as the world's #1 electricity source",
-        "Quantum advantage officially demonstrated by a commercial provider",
-        "First clinical trial begins for 3D-printed organ transplant",
-        "Global energy storage capacity exceeds 120 GW",
-        "Official London heatwave (3+ days over 28°C)"
+        "Artemis II lunar flyby",
+        "Archaeologist reveals Pyramid chamber",
+        "Renewables surpass coal",
+        "Commercial Quantum advantage",
+        "3D-printed organ trial begins",
+        "Energy storage >120 GW",
+        "Official London heatwave"
     ],
     trump: [
         // Free space is handled separately
-        "Trump suffers a health event requiring hospitalisation",
-        "US Cabinet member resigns or is fired following a drug scandal",
-        "GTA VI release date officially delayed beyond 2026",
-        "Zohran Mamdani officially announces US Presidential intent"
+        "Trump hospitalised",
+        "Cabinet member fired over drugs",
+        "GTA VI delayed beyond 2026",
+        "Mamdani announces Prez run"
     ]
 };
 
-const FREE_SPACE_TEXT = "Trump abducts Nicolas Maduro";
+const FREE_SPACE_TEXT = "Trump abducts Maduro";
+let winTimeout = null;
 
 // Utility: Fisher-Yates Shuffle
 function shuffle(array) {
@@ -108,6 +109,7 @@ function renderGrid() {
     items.forEach((text, index) => {
         const cell = document.createElement('div');
         cell.classList.add('bingo-cell');
+        cell.dataset.index = index; // Store index for win check
 
         const content = document.createElement('div');
         content.classList.add('content');
@@ -131,7 +133,8 @@ function renderGrid() {
         stamp.classList.add('stamp-mark');
         // Random rotation for realism
         const rotation = Math.floor(Math.random() * 60) - 30; // -30 to 30 deg
-        stamp.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        const scale = 0.9 + Math.random() * 0.2; // slight size variation
+        stamp.style.transform = `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`;
         cell.appendChild(stamp);
 
         grid.appendChild(cell);
@@ -139,15 +142,125 @@ function renderGrid() {
 }
 
 function toggleStamp(cell) {
+    if (cell.classList.contains('locked')) return;
+
     cell.classList.toggle('stamped');
+    checkWin();
+}
+
+function checkWin() {
+    const cells = document.querySelectorAll('.bingo-cell');
+    const size = 5;
+    let winType = null; // 'row', 'col', 'diag-main', 'diag-anti'
+    let winningLine = null;
+
+    // Check Rows
+    for (let r = 0; r < size; r++) {
+        let rowIndices = [];
+        let allStamped = true;
+        for (let c = 0; c < size; c++) {
+            let index = r * size + c;
+            rowIndices.push(index);
+            if (!cells[index].classList.contains('stamped')) {
+                allStamped = false;
+                break;
+            }
+        }
+        if (allStamped) {
+            winningLine = rowIndices;
+            winType = 'row';
+            break;
+        }
+    }
+
+    // Check Columns
+    if (!winningLine) {
+        for (let c = 0; c < size; c++) {
+            let colIndices = [];
+            let allStamped = true;
+            for (let r = 0; r < size; r++) {
+                let index = r * size + c;
+                colIndices.push(index);
+                if (!cells[index].classList.contains('stamped')) {
+                    allStamped = false;
+                    break;
+                }
+            }
+            if (allStamped) {
+                winningLine = colIndices;
+                winType = 'col';
+                break;
+            }
+        }
+    }
+
+    // Check Diagonals
+    if (!winningLine) {
+        // Top-left to bottom-right
+        let diag1 = [0, 6, 12, 18, 24];
+        if (diag1.every(i => cells[i].classList.contains('stamped'))) {
+            winningLine = diag1;
+            winType = 'diag-main';
+        }
+    }
+    if (!winningLine) {
+        // Top-right to bottom-left
+        let diag2 = [4, 8, 12, 16, 20];
+        if (diag2.every(i => cells[i].classList.contains('stamped'))) {
+            winningLine = diag2;
+            winType = 'diag-anti';
+        }
+    }
+
+    if (winningLine) {
+        triggerWin(winningLine, winType);
+    } else {
+        removeStrikes();
+    }
+}
+
+function triggerWin(indices, winType) {
+    // Confetti immediately
+    if (window.confetti) {
+        window.confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    }
+
+    // Clear any pending timeout
+    if (winTimeout) clearTimeout(winTimeout);
+
+    // Delay strike through
+    winTimeout = setTimeout(() => {
+        const cells = document.querySelectorAll('.bingo-cell');
+
+        // Remove old strikes to be clean
+        cells.forEach(cell => {
+             cell.classList.remove('won', 'won-row', 'won-col', 'won-diag-main', 'won-diag-anti');
+        });
+
+        indices.forEach(index => {
+            cells[index].classList.add('won');
+            cells[index].classList.add(`won-${winType}`);
+        });
+    }, 500);
+}
+
+function removeStrikes() {
+    if (winTimeout) clearTimeout(winTimeout);
+    const cells = document.querySelectorAll('.bingo-cell');
+    cells.forEach(cell => {
+        cell.classList.remove('won', 'won-row', 'won-col', 'won-diag-main', 'won-diag-anti');
+    });
 }
 
 function downloadGrid() {
-    const element = document.getElementById('bingo-container');
-    // Use html2canvas
+    const element = document.getElementById('capture-area');
     html2canvas(element, {
-        backgroundColor: null, // Transparent if possible, or matches CSS
-        scale: 2 // Higher resolution
+        backgroundColor: null,
+        scale: 2
     }).then(canvas => {
         const link = document.createElement('a');
         link.download = '2026-bingo-card.png';
@@ -160,6 +273,9 @@ function downloadGrid() {
 document.addEventListener('DOMContentLoaded', () => {
     renderGrid();
 
-    document.getElementById('refresh-btn').addEventListener('click', renderGrid);
+    document.getElementById('refresh-btn').addEventListener('click', () => {
+        renderGrid();
+        removeStrikes();
+    });
     document.getElementById('download-btn').addEventListener('click', downloadGrid);
 });

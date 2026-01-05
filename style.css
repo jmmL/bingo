@@ -4,7 +4,7 @@
     --text-color: #2c3e50;
     --accent-color: #6c5ce7;
     --border-color: #dfe6e9;
-    --stamp-color: rgba(231, 76, 60, 0.85); /* Reddish stamp */
+    --stamp-color: rgba(231, 76, 60, 0.9); /* Reddish stamp */
     --free-space-bg: #ffeaa7; /* Subtle highlight */
 
     --font-family: 'Inter', sans-serif;
@@ -27,6 +27,13 @@ body {
     text-align: center;
 }
 
+/* Capture Area needs to handle background color */
+#capture-area {
+    background-color: var(--bg-color);
+    padding: 20px;
+    border-radius: 10px;
+}
+
 header h1 {
     font-weight: 800;
     font-size: 2.5rem;
@@ -41,12 +48,9 @@ header p {
     margin-bottom: 2rem;
 }
 
-/* Container for capture */
+/* Bingo Container */
 #bingo-container {
-    padding: 20px;
-    background-color: var(--bg-color); /* Ensure background is captured */
-    border-radius: 10px;
-    display: inline-block; /* Fits content */
+    /* Padding moved to capture area mostly, but kept some for grid spacing if needed */
 }
 
 .grid {
@@ -66,7 +70,7 @@ header p {
     align-items: center;
     justify-content: center;
     text-align: center;
-    font-size: 0.75rem; /* Small text to fit */
+    font-size: 0.75rem; /* Default small text */
     font-weight: 600;
     cursor: pointer;
     position: relative;
@@ -88,44 +92,78 @@ header p {
 }
 
 .content {
-    z-index: 1; /* Text above background, below stamp? Actually stamp needs to be on top */
+    z-index: 1;
+    position: relative;
 }
 
-/* Stamp Effect */
+/* Stamp Effect - Analogue style */
 .stamp-mark {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 80%;
-    height: 80%;
-    border-radius: 50%;
-    border: 3px solid var(--stamp-color);
-    background-color: rgba(231, 76, 60, 0.2); /* Lighter interior */
-    opacity: 0;
-    pointer-events: none; /* Let clicks pass through */
-    transition: opacity 0.2s ease-in;
-    z-index: 2;
-    box-shadow: 0 0 0 2px rgba(231,76,60,0.1) inset; /* Rough edge effect simulation */
-}
+    width: 90%;
+    height: 90%;
+    border-radius: 50%; /* Imperfect circle? */
 
-/* Use a pseudo element to make the stamp look 'grungy' or 'inked' */
-.stamp-mark::after {
-    content: "BINGO";
-    font-size: 0.6rem; /* Tiny text */
-    color: var(--stamp-color);
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-weight: 800;
-    opacity: 0.6;
-    display: none; /* Optional: maybe just a circle is better? */
+    /* Analogue ink effect: radial gradient with transparency */
+    background: radial-gradient(
+        circle,
+        rgba(231, 76, 60, 0.9) 30%,
+        rgba(231, 76, 60, 0.7) 60%,
+        rgba(231, 76, 60, 0.4) 80%,
+        transparent 100%
+    );
+
+    /* No border */
+    border: none;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 2;
+    mix-blend-mode: multiply; /* Make it look like ink soaking in */
 }
 
 /* When stamped */
 .bingo-cell.stamped .stamp-mark {
     opacity: 1;
 }
+
+/* Winning Strike Through */
+.bingo-cell.won::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 110%; /* Connects to neighbors */
+    height: 6px;
+    background-color: var(--stamp-color);
+    z-index: 3;
+    border-radius: 0; /* Continuous line look */
+    opacity: 0.9;
+    transform: translate(-50%, -50%); /* Default horizontal */
+}
+
+/* Fix ends of the line */
+/* We can't easily fix ends with just CSS on cells without complex selectors,
+   but rounded ends are fine or square ends overlapping.
+   Let's use square ends to make it look continuous.
+*/
+
+.bingo-cell.won-col::after {
+    transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.bingo-cell.won-diag-main::after {
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 150%; /* Longer for diagonals */
+}
+
+.bingo-cell.won-diag-anti::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+    width: 150%;
+}
+
 
 /* Controls */
 .controls {
@@ -169,10 +207,14 @@ footer {
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 500px) {
+@media (max-width: 600px) {
     .container {
         width: 100%;
-        padding: 5px;
+        padding: 10px;
+    }
+
+    header h1 {
+        font-size: 2rem;
     }
 
     .grid {
@@ -180,11 +222,19 @@ footer {
     }
 
     .bingo-cell {
-        font-size: 0.55rem;
+        font-size: 0.6rem; /* Even smaller for mobile */
         padding: 2px;
+        word-wrap: break-word; /* Ensure text wraps */
+        line-height: 1.1;
     }
 
-    #bingo-container {
-        padding: 5px;
+    #capture-area {
+        padding: 10px;
+    }
+}
+
+@media (max-width: 380px) {
+     .bingo-cell {
+        font-size: 0.5rem; /* Very small screens */
     }
 }
