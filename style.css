@@ -2,7 +2,7 @@
     --bg-color: #f9f9f9;
     --card-bg: #ffffff;
     --text-color: #2c3e50;
-    --accent-color: #6c5ce7;
+    --accent-color: #54a0ff; /* Pleasing light blue */
     --border-color: #dfe6e9;
     --stamp-color: rgba(231, 76, 60, 0.9); /* Reddish stamp */
     --free-space-bg: #ffeaa7; /* Subtle highlight */
@@ -78,7 +78,7 @@ header p {
     position: relative;
     user-select: none;
     transition: transform 0.1s ease, box-shadow 0.1s ease;
-    overflow: hidden; /* Keep stamp inside */
+    /* overflow: hidden; REMOVED to allow strike lines to bleed */
 }
 
 .bingo-cell:hover {
@@ -96,6 +96,16 @@ header p {
 .content {
     z-index: 1;
     position: relative;
+}
+
+/* Stamp Container to clip the stamp */
+.stamp-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 2;
+    pointer-events: none;
+    border-radius: 6px; /* Match cell radius roughly */
 }
 
 /* Stamp Effect - Analogue style */
@@ -122,7 +132,6 @@ header p {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease-in, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 2;
     mix-blend-mode: multiply; /* Make it look like ink soaking in */
 }
 
@@ -131,39 +140,48 @@ header p {
     opacity: 1;
 }
 
-/* Winning Strike Through */
-.bingo-cell.won::after {
-    content: '';
+/* Winning Strike Through Lines */
+.strike-line {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 110%; /* Connects to neighbors */
-    height: 6px;
     background-color: var(--stamp-color);
-    z-index: 3;
-    border-radius: 0; /* Continuous line look */
-    opacity: 0.9;
-    transform: translate(-50%, -50%); /* Default horizontal */
+    height: 10px; /* Wider */
+    opacity: 0; /* Hidden by default */
+    z-index: 3; /* Above stamp (z=2) and content (z=1)? content is relative z=1. stamp container is z=2. */
+    /* Wait, if stamp container is z=2, strike line needs to be z=3. */
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    display: none; /* Hide entirely if not needed to save paint? Or just opacity. Opacity allows transition. */
 }
 
-/* Fix ends of the line */
-/* We can't easily fix ends with just CSS on cells without complex selectors,
-   but rounded ends are fine or square ends overlapping.
-   Let's use square ends to make it look continuous.
-*/
+.strike-line.active {
+    opacity: 0.6; /* Lower opacity */
+    display: block;
+}
 
-.bingo-cell.won-col::after {
+/* Row Line */
+.strike-line.row {
+    width: calc(100% + 12px); /* Overlap gap */
+    transform: translate(-50%, -50%);
+}
+
+/* Col Line */
+.strike-line.col {
+    width: calc(100% + 12px);
     transform: translate(-50%, -50%) rotate(90deg);
 }
 
-.bingo-cell.won-diag-main::after {
+/* Diag Main Line */
+.strike-line.diag-main {
+    width: 150%;
     transform: translate(-50%, -50%) rotate(45deg);
-    width: 150%; /* Longer for diagonals */
 }
 
-.bingo-cell.won-diag-anti::after {
-    transform: translate(-50%, -50%) rotate(-45deg);
+/* Diag Anti Line */
+.strike-line.diag-anti {
     width: 150%;
+    transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 
@@ -191,7 +209,7 @@ header p {
 }
 
 .btn.primary:hover {
-    background-color: #5649c0;
+    background-color: #2980b9; /* Slightly darker than 54a0ff */
 }
 
 .btn.secondary {
